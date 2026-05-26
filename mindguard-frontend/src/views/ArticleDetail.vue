@@ -19,6 +19,9 @@
           <el-tag size="small" effect="plain">{{ severityLabels[article.severityLevel] || article.severityLevel }}</el-tag>
           <span>{{ formatTime(article.createdAt) }}</span>
         </div>
+        <div v-if="article.videoUrl" class="article-video">
+          <video :src="article.videoUrl" controls style="width:100%;max-width:720px;border-radius:8px" />
+        </div>
         <div class="article-content">{{ article.content }}</div>
       </div>
     </template>
@@ -60,6 +63,7 @@ async function fetchArticle() {
 .article-detail {
   h2 { font-size: 22px; margin-bottom: 12px; }
   .article-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; font-size: 13px; color: #c0c4cc; }
+  .article-video { margin-bottom: 20px; }
   .article-content { font-size: 15px; line-height: 1.9; color: #303133; }
   :deep(.article-content p) { margin-bottom: 12px; }
 }

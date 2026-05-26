@@ -7,7 +7,19 @@
     <el-row :gutter="20">
       <el-col :span="8">
         <div class="card-wrapper profile-card text-center">
-          <SurnameAvatar :name="userStore.userInfo?.realName" :size="80" />
+          <el-upload
+            class="avatar-uploader"
+            action="/api/auth/avatar"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+            accept="image/*"
+          >
+            <SurnameAvatar v-if="!avatarUrl" :name="userStore.userInfo?.realName" :size="80" />
+            <img v-else :src="avatarUrl" class="avatar-img" />
+            <div class="avatar-overlay">更换头像</div>
+          </el-upload>
           <h3 class="mt-16">{{ userStore.userInfo?.realName || '用户' }}</h3>
           <p class="role-tag">
             <el-tag size="small" effect="plain">{{ role === 'STUDENT' ? '学生' : '辅导员' }}</el-tag>
@@ -73,6 +85,9 @@ import { getMyAppointments } from '@/api/appointment'
 const userStore = useUserStore()
 const role = computed(() => userStore.role)
 
+const uploadHeaders = { Authorization: `Bearer ${userStore.token}` }
+const avatarUrl = ref(userStore.userInfo?.avatar || '')
+
 const saving = ref(false)
 const form = reactive({
   username: '',
@@ -104,6 +119,22 @@ onMounted(async () => {
   }
 })
 
+function handleAvatarSuccess(res) {
+  if (res.code === 200) {
+    avatarUrl.value = res.data.url
+    userStore.fetchInfo()
+    ElMessage.success('头像上传成功')
+  }
+}
+
+function beforeAvatarUpload(file) {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isImage) { ElMessage.error('只能上传图片文件'); return false }
+  if (!isLt2M) { ElMessage.error('图片大小不能超过2MB'); return false }
+  return true
+}
+
 async function handleSave() {
   saving.value = true
   try {
@@ -120,6 +151,24 @@ async function handleSave() {
 </script>
 
 <style lang="scss" scoped>
+.avatar-uploader {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  .avatar-img {
+    width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+  }
+  .avatar-overlay {
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(0,0,0,.4);
+    color: #fff; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .2s;
+  }
+  &:hover .avatar-overlay { opacity: 1; }
+}
 .profile-card {
   h3 { margin-bottom: 4px; }
   .role-tag { margin-bottom: 4px; }

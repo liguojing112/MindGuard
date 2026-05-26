@@ -4,8 +4,8 @@
       v-for="item in moodEmojis"
       :key="item.value"
       class="emoji-item"
-      :class="{ active: modelValue === item.value }"
-      @click="$emit('update:modelValue', item.value)"
+      :class="{ active: modelValue === item.emoji }"
+      @click="$emit('update:modelValue', item.emoji)"
     >
       <span class="emoji-icon">{{ item.emoji }}</span>
       <span class="emoji-label">{{ item.label }}</span>

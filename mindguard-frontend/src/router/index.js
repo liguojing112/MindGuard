@@ -36,7 +36,8 @@ const routes = [
       { path: 'appointments', name: 'MyAppointments', component: () => import('@/views/MyAppointments.vue') },
       { path: 'articles', name: 'Articles', component: () => import('@/views/Articles.vue') },
       { path: 'articles/:id', name: 'ArticleDetail', component: () => import('@/views/ArticleDetail.vue') },
-      { path: 'profile', name: 'StudentProfile', component: () => import('@/views/PersonalCenter.vue') }
+      { path: 'profile', name: 'StudentProfile', component: () => import('@/views/PersonalCenter.vue') },
+      { path: 'notifications', name: 'StudentNotifications', component: () => import('@/views/NotificationList.vue') }
     ]
   },
   {
@@ -52,7 +53,9 @@ const routes = [
       { path: 'appointments/:id', name: 'AppointmentDetail', component: () => import('@/views/AppointmentDetail.vue') },
       { path: 'students/:id', name: 'StudentArchive', component: () => import('@/views/StudentArchive.vue') },
       { path: 'articles', name: 'ArticleManagement', component: () => import('@/views/ArticleManagement.vue') },
-      { path: 'profile', name: 'CounselorProfile', component: () => import('@/views/PersonalCenter.vue') }
+      { path: 'assessments', name: 'AssessmentData', component: () => import('@/views/AssessmentData.vue') },
+      { path: 'profile', name: 'CounselorProfile', component: () => import('@/views/PersonalCenter.vue') },
+      { path: 'notifications', name: 'CounselorNotifications', component: () => import('@/views/NotificationList.vue') }
     ]
   }
 ]

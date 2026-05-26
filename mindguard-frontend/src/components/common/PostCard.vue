@@ -8,7 +8,7 @@
         <span class="post-time">{{ formatTime(post.createdAt) }}</span>
       </div>
       <div class="post-meta">
-        <AnalysisBadge v-if="post.analysisLabel" :label="post.analysisLabel" />
+        <AnalysisBadge v-if="post.label" :label="post.label" />
         <el-tag v-if="post.isAnonymous" size="small" type="info" effect="plain">匿名</el-tag>
       </div>
     </div>

@@ -5,7 +5,9 @@ export const statusLabels = {
   RESOLVED: '已解决',
   APPROVED: '已通过',
   REJECTED: '已拒绝',
-  COMPLETED: '已完成'
+  IN_PROGRESS: '咨询中',
+  COMPLETED: '已完成',
+  ARCHIVED: '已归档'
 }
 
 export const statusColors = {
@@ -15,7 +17,9 @@ export const statusColors = {
   RESOLVED: 'success',
   APPROVED: 'success',
   REJECTED: 'danger',
-  COMPLETED: 'success'
+  IN_PROGRESS: '',
+  COMPLETED: 'success',
+  ARCHIVED: 'info'
 }
 
 export const severityLabels = {
@@ -23,6 +27,7 @@ export const severityLabels = {
   MEDIUM: '中',
   HIGH: '高',
   CRITICAL: '极高',
+  NORMAL: '正常',
   MILD: '轻度',
   MODERATE: '中度',
   SEVERE: '重度'
@@ -33,6 +38,7 @@ export const severityColors = {
   MEDIUM: 'warning',
   HIGH: 'danger',
   CRITICAL: 'danger',
+  NORMAL: 'success',
   MILD: 'info',
   MODERATE: 'warning',
   SEVERE: 'danger'

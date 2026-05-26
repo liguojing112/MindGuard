@@ -10,18 +10,18 @@
           <el-table-column prop="scaleName" label="量表名称" min-width="160" />
           <el-table-column label="得分" width="100">
             <template #default="{ row }">
-              <strong>{{ row.score || row.totalScore || '-' }}</strong>
+              <strong>{{ row.totalScore || row.score || '-' }}</strong>
             </template>
           </el-table-column>
           <el-table-column label="程度" width="120">
             <template #default="{ row }">
-              <el-tag :type="levelType(row.level || row.severity)" effect="plain">
-                {{ row.level || row.severity || '正常' }}
+              <el-tag :type="severityColors[row.severityLevel]" size="small" effect="plain">
+                {{ severityLabels[row.severityLevel] || row.severityLevel }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column label="测评时间" width="180">
-            <template #default="{ row }">{{ formatTime(row.createdAt || row.assessmentDate) }}</template>
+            <template #default="{ row }">{{ formatTime(row.createdAt || row.completedAt || row.startedAt) }}</template>
           </el-table-column>
           <el-table-column label="操作" width="100" fixed="right">
             <template #default="{ row }">
@@ -58,6 +58,7 @@ import { ref, onMounted } from 'vue'
 import { getMyAssessments, getResult } from '@/api/assessment'
 import ReportView from '@/components/common/ReportView.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import { severityLabels, severityColors } from '@/utils/constants'
 import { formatTime } from '@/utils/helpers'
 
 const loading = ref(false)
@@ -86,14 +87,6 @@ async function showReport(row) {
     currentReport.value = res.data
     dialogVisible.value = true
   } catch { /* */ }
-}
-
-function levelType(level) {
-  if (!level) return 'info'
-  const code = String(level).toUpperCase()
-  if (code === 'SEVERE' || code === '重度' || code === '严重') return 'danger'
-  if (code === 'MODERATE' || code === 'MILD' || code === '中度' || code === '中等' || code === '轻度') return 'warning'
-  return 'success'
 }
 </script>
 

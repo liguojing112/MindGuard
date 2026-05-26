@@ -12,14 +12,15 @@ import com.mindguard.module.assessment.entity.*;
 import com.mindguard.module.assessment.mapper.*;
 import com.mindguard.module.assessment.service.AssessmentService;
 import com.mindguard.module.assessment.service.ArticleService;
+import com.mindguard.module.user.entity.User;
+import com.mindguard.module.user.mapper.UserMapper;
 import com.mindguard.util.ScoreCalculator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +33,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final ScaleOptionMapper optionMapper;
     private final ArticleService articleService;
     private final ScoreCalculator scoreCalculator;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -111,6 +113,7 @@ public class AssessmentServiceImpl implements AssessmentService {
             vo.setStatus(a.getStatus());
             vo.setStartedAt(a.getStartedAt());
             vo.setCompletedAt(a.getCompletedAt());
+            vo.setCreatedAt(a.getCompletedAt() != null ? a.getCompletedAt() : a.getStartedAt());
 
             Scale scale = scaleMapper.selectById(a.getScaleId());
             if (scale != null) {
@@ -145,6 +148,96 @@ public class AssessmentServiceImpl implements AssessmentService {
 
         Scale scale = scaleMapper.selectById(result.getScaleId());
         return buildResultVO(result, scale);
+    }
+
+    @Override
+    public PageResult<AssessmentResultVO> listAllAssessments(Integer page, Integer size) {
+        Page<AssessmentResult> pageObj = new Page<>(page, size);
+        LambdaQueryWrapper<AssessmentResult> wrapper = new LambdaQueryWrapper<AssessmentResult>()
+                .orderByDesc(AssessmentResult::getCreatedAt);
+        Page<AssessmentResult> result = assessmentResultMapper.selectPage(pageObj, wrapper);
+
+        List<AssessmentResultVO> voList = result.getRecords().stream().map(r -> {
+            AssessmentResultVO vo = new AssessmentResultVO();
+            vo.setId(r.getId());
+            vo.setUserId(r.getUserId());
+            vo.setScaleId(r.getScaleId());
+            vo.setTotalScore(r.getTotalScore());
+            vo.setSeverityLevel(r.getSeverityLevel());
+            vo.setReportText(r.getReportText());
+            vo.setRecommendations(r.getRecommendations());
+            vo.setCreatedAt(r.getCreatedAt());
+
+            Scale scale = scaleMapper.selectById(r.getScaleId());
+            if (scale != null) {
+                vo.setScaleName(scale.getName());
+                vo.setScaleType(scale.getType());
+            }
+
+            User user = userMapper.selectById(r.getUserId());
+            if (user != null) {
+                vo.setStudentName(user.getRealName());
+            }
+
+            if (vo.getCreatedAt() == null && r.getAssessmentId() != null) {
+                UserAssessment ua = userAssessmentMapper.selectById(r.getAssessmentId());
+                if (ua != null && ua.getCompletedAt() != null) {
+                    vo.setCreatedAt(ua.getCompletedAt());
+                }
+            }
+            return vo;
+        }).collect(Collectors.toList());
+
+        return PageResult.of(voList, result.getTotal(), result.getCurrent(), result.getSize());
+    }
+
+    @Override
+    public List<Map<String, Object>> getAllAssessmentData() {
+        List<AssessmentResult> results = assessmentResultMapper.selectList(
+                new LambdaQueryWrapper<AssessmentResult>().orderByDesc(AssessmentResult::getCreatedAt));
+
+        List<Map<String, Object>> data = new ArrayList<>();
+        for (AssessmentResult r : results) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("学生姓名", getUserName(r.getUserId()));
+            row.put("量表", getScaleName(r.getScaleId()));
+            row.put("总分", r.getTotalScore());
+            row.put("程度", mapSeverity(r.getSeverityLevel()));
+
+            String timeStr = "";
+            if (r.getCreatedAt() != null) {
+                timeStr = r.getCreatedAt().toString();
+            } else if (r.getAssessmentId() != null) {
+                UserAssessment ua = userAssessmentMapper.selectById(r.getAssessmentId());
+                if (ua != null && ua.getCompletedAt() != null) {
+                    timeStr = ua.getCompletedAt().toString();
+                }
+            }
+            row.put("时间", timeStr);
+            data.add(row);
+        }
+        return data;
+    }
+
+    private String mapSeverity(String level) {
+        if (level == null) return "";
+        return switch (level) {
+            case "NORMAL" -> "正常";
+            case "MILD" -> "轻度";
+            case "MODERATE" -> "中度";
+            case "SEVERE" -> "重度";
+            default -> level;
+        };
+    }
+
+    private String getUserName(Long userId) {
+        User user = userMapper.selectById(userId);
+        return user != null ? user.getRealName() : "用户" + userId;
+    }
+
+    private String getScaleName(Long scaleId) {
+        Scale scale = scaleMapper.selectById(scaleId);
+        return scale != null ? scale.getName() : "量表" + scaleId;
     }
 
     private AssessmentResultVO buildResultVO(AssessmentResult result, Scale scale) {

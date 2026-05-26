@@ -4,9 +4,10 @@
       <span class="platform-name">MindGuard 智能校园心理平台</span>
     </div>
     <div class="header-right">
-      <el-badge v-if="role === 'COUNSELOR'" :value="notificationStore.unreadCount" :hidden="!notificationStore.unreadCount" class="mr-8">
-        <el-button :icon="Bell" circle @click="$router.push('/counselor/alerts')" />
+      <el-badge v-if="unreadTotal" :value="unreadTotal" class="mr-4">
+        <el-button :icon="Bell" circle @click="router.push({ path: `/${roleValue === 'STUDENT' ? 'student' : 'counselor'}/notifications` })" />
       </el-badge>
+      <el-button v-else :icon="Bell" circle class="mr-4" @click="router.push({ path: `/${roleValue === 'STUDENT' ? 'student' : 'counselor'}/notifications` })" />
       <el-dropdown @command="handleCommand" trigger="click">
         <span class="user-info">
           <SurnameAvatar :name="userStore.userInfo?.realName || userStore.userInfo?.username" :size="32" />
@@ -38,17 +39,17 @@ import SurnameAvatar from '@/components/common/SurnameAvatar.vue'
 const router = useRouter()
 const userStore = useUserStore()
 const notificationStore = useNotificationStore()
-const role = computed(() => userStore.role)
+const roleValue = computed(() => userStore.role)
+const isCounselor = computed(() => roleValue.value === 'COUNSELOR' || roleValue.value === 'ADMIN')
+const unreadTotal = computed(() => notificationStore.totalCount)
 
 onMounted(() => {
-  if (role.value === 'COUNSELOR') {
-    notificationStore.fetchUnreadCount()
-  }
+  notificationStore.fetchUnreadCount()
 })
 
 function handleCommand(cmd) {
   if (cmd === 'profile') {
-    const prefix = role.value === 'STUDENT' ? '/student' : '/counselor'
+    const prefix = roleValue.value === 'STUDENT' ? '/student' : '/counselor'
     router.push(prefix + '/profile')
   } else if (cmd === 'logout') {
     userStore.logout()

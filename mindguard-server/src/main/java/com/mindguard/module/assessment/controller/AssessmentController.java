@@ -10,10 +10,13 @@ import com.mindguard.module.assessment.dto.SubmitAnswerDTO;
 import com.mindguard.module.assessment.entity.Scale;
 import com.mindguard.module.assessment.service.AssessmentService;
 import com.mindguard.module.assessment.service.ScaleService;
+import com.mindguard.util.ExcelExportUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,5 +77,18 @@ public class AssessmentController {
         Map<String, Object> stats = new HashMap<>();
         stats.put("message", "测评统计通过Dashboard接口获取");
         return Result.ok(stats);
+    }
+
+    @GetMapping("/all")
+    public Result<PageResult<AssessmentResultVO>> listAllAssessments(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return Result.ok(assessmentService.listAllAssessments(page, size));
+    }
+
+    @GetMapping("/export")
+    public void exportAssessments(HttpServletResponse response) throws IOException {
+        List<Map<String, Object>> data = assessmentService.getAllAssessmentData();
+        ExcelExportUtil.exportAssessmentStats(data, response);
     }
 }

@@ -137,7 +137,7 @@ public class AlertServiceImpl implements AlertService {
         EmotionAnalysisResult analysisResult = analysisResultMapper.selectOne(
                 new LambdaQueryWrapper<EmotionAnalysisResult>().eq(EmotionAnalysisResult::getPostId, alert.getPostId()));
         if (analysisResult != null) {
-            vo.setAnalysisLabel(analysisResult.getEmotionLabel());
+            vo.setAnalysisLabel(mapToThreeStatus(analysisResult.getEmotionLabel()));
             vo.setAnalysisReport(analysisResult.getAnalysisText());
         }
 
@@ -154,5 +154,15 @@ public class AlertServiceImpl implements AlertService {
         }
 
         return vo;
+    }
+
+    private String mapToThreeStatus(String label) {
+        if (label == null) return "正常情绪";
+        return switch (label) {
+            case "POSITIVE", "NEUTRAL" -> "正常情绪";
+            case "MILD_NEGATIVE" -> "一般负面";
+            case "SEVERE_NEGATIVE" -> "高危负面";
+            default -> "正常情绪";
+        };
     }
 }

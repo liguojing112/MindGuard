@@ -11,8 +11,10 @@ import com.mindguard.module.appointment.service.AppointmentService;
 import com.mindguard.module.assessment.dto.AssessmentResultVO;
 import com.mindguard.module.assessment.entity.AssessmentResult;
 import com.mindguard.module.assessment.entity.Scale;
+import com.mindguard.module.assessment.entity.UserAssessment;
 import com.mindguard.module.assessment.mapper.AssessmentResultMapper;
 import com.mindguard.module.assessment.mapper.ScaleMapper;
+import com.mindguard.module.assessment.mapper.UserAssessmentMapper;
 import com.mindguard.module.emotion.entity.Alert;
 import com.mindguard.module.emotion.entity.EmotionPost;
 import com.mindguard.module.emotion.entity.MoodCheckin;
@@ -44,6 +46,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final EmotionPostMapper emotionPostMapper;
     private final MoodCheckinMapper moodCheckinMapper;
     private final ScaleMapper scaleMapper;
+    private final UserAssessmentMapper userAssessmentMapper;
 
     @Override
     @Transactional
@@ -83,6 +86,26 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .eq(Appointment::getStudentId, studentId)
                 .orderByDesc(Appointment::getCreatedAt);
         Page<Appointment> result = appointmentMapper.selectPage(pageObj, wrapper);
+        for (Appointment a : result.getRecords()) {
+            Counselor counselor = counselorMapper.selectById(a.getCounselorId());
+            if (counselor != null) {
+                a.setCounselorName(counselor.getRealName());
+            }
+            Evaluation evaluation = evaluationMapper.selectOne(
+                    new LambdaQueryWrapper<Evaluation>().eq(Evaluation::getAppointmentId, a.getId()));
+            if (evaluation != null) {
+                a.setRating(evaluation.getRating());
+                a.setEvaluated(true);
+                a.setComment(evaluation.getComment());
+            }
+            ConsultationRecord record = consultationRecordMapper.selectOne(
+                    new LambdaQueryWrapper<ConsultationRecord>().eq(ConsultationRecord::getAppointmentId, a.getId()));
+            if (record != null) {
+                a.setContentSummary(record.getContentSummary());
+                a.setDiagnosis(record.getDiagnosis());
+                a.setSuggestions(record.getSuggestions());
+            }
+        }
         return PageResult.of(result);
     }
 
@@ -97,6 +120,16 @@ public class AppointmentServiceImpl implements AppointmentService {
             wrapper.eq(Appointment::getStatus, status);
         }
         Page<Appointment> result = appointmentMapper.selectPage(pageObj, wrapper);
+        for (Appointment a : result.getRecords()) {
+            User student = userMapper.selectById(a.getStudentId());
+            if (student != null) {
+                a.setStudentName(student.getRealName());
+            }
+            Counselor counselor = counselorMapper.selectById(a.getCounselorId());
+            if (counselor != null) {
+                a.setCounselorName(counselor.getRealName());
+            }
+        }
         return PageResult.of(result);
     }
 
@@ -105,6 +138,28 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment appointment = appointmentMapper.selectById(id);
         if (appointment == null) {
             throw new BusinessException("预约不存在");
+        }
+        User student = userMapper.selectById(appointment.getStudentId());
+        if (student != null) {
+            appointment.setStudentName(student.getRealName());
+        }
+        Counselor counselor = counselorMapper.selectById(appointment.getCounselorId());
+        if (counselor != null) {
+            appointment.setCounselorName(counselor.getRealName());
+        }
+        Evaluation evaluation = evaluationMapper.selectOne(
+                new LambdaQueryWrapper<Evaluation>().eq(Evaluation::getAppointmentId, id));
+        if (evaluation != null) {
+            appointment.setRating(evaluation.getRating());
+            appointment.setEvaluated(true);
+            appointment.setComment(evaluation.getComment());
+        }
+        ConsultationRecord record = consultationRecordMapper.selectOne(
+                new LambdaQueryWrapper<ConsultationRecord>().eq(ConsultationRecord::getAppointmentId, id));
+        if (record != null) {
+            appointment.setContentSummary(record.getContentSummary());
+            appointment.setDiagnosis(record.getDiagnosis());
+            appointment.setSuggestions(record.getSuggestions());
         }
         return appointment;
     }
@@ -117,7 +172,14 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new BusinessException("当前状态不允许审批通过");
         }
         appointment.setStatus("APPROVED");
+        appointment.setRoomNumber(generateRoomNumber());
         appointmentMapper.updateById(appointment);
+    }
+
+    private String generateRoomNumber() {
+        String datePart = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String randomCode = String.format("%03d", (int)(Math.random() * 1000));
+        return "ROOM-" + datePart + "-" + randomCode;
     }
 
     @Override
@@ -223,6 +285,12 @@ public class AppointmentServiceImpl implements AppointmentService {
                 vo.setScaleName(scale.getName());
                 vo.setScaleType(scale.getType());
             }
+            if (vo.getCreatedAt() == null && r.getAssessmentId() != null) {
+                UserAssessment ua = userAssessmentMapper.selectById(r.getAssessmentId());
+                if (ua != null && ua.getCompletedAt() != null) {
+                    vo.setCreatedAt(ua.getCompletedAt());
+                }
+            }
             return vo;
         }).collect(Collectors.toList());
         archive.setAssessments(resultVOs);
@@ -244,6 +312,17 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
         }
         archive.setAppointments(appointments);
+
+        List<Long> appointmentIds = appointments.stream()
+                .filter(a -> "COMPLETED".equals(a.getStatus()))
+                .map(Appointment::getId)
+                .collect(Collectors.toList());
+        if (!appointmentIds.isEmpty()) {
+            archive.setConsultationRecords(consultationRecordMapper.selectList(
+                    new LambdaQueryWrapper<ConsultationRecord>()
+                            .in(ConsultationRecord::getAppointmentId, appointmentIds)
+                            .orderByDesc(ConsultationRecord::getCreatedAt)));
+        }
 
         return archive;
     }

@@ -15,8 +15,8 @@
           show-actions
         >
           <template #actions>
-            <el-button link type="primary" size="small">
-              <el-icon><Star /></el-icon> 关注
+            <el-button link type="primary" size="small" @click="handleConcern(post.id)">
+              <el-icon><component :is="concernedPosts.has(post.id) ? StarFilled : Star" /></el-icon> {{ concernedPosts.has(post.id) ? '已关注' : '关注' }}
             </el-button>
           </template>
         </PostCard>
@@ -37,7 +37,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getPublicPosts } from '@/api/emotion'
+import { Star, StarFilled } from '@element-plus/icons-vue'
+import { getPublicPosts, concernPost } from '@/api/emotion'
+import { ElMessage } from 'element-plus'
 import PostCard from '@/components/common/PostCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
@@ -46,6 +48,7 @@ const posts = ref([])
 const page = ref(1)
 const size = ref(10)
 const total = ref(0)
+const concernedPosts = ref(new Set())
 
 onMounted(() => fetchPosts())
 
@@ -57,6 +60,14 @@ async function fetchPosts() {
     total.value = res.data.total || 0
   } catch { /* handled by interceptor */ }
   finally { loading.value = false }
+}
+
+async function handleConcern(postId) {
+  try {
+    await concernPost(postId)
+    concernedPosts.value.add(postId)
+    ElMessage.success('已关注，辅导员将收到提醒')
+  } catch { /* handled by interceptor */ }
 }
 </script>
 

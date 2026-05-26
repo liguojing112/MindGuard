@@ -52,6 +52,13 @@ public class EmotionController {
         return Result.ok();
     }
 
+    @PostMapping("/posts/{id}/concern")
+    public Result<Void> concernPost(HttpServletRequest request, @PathVariable Long id) {
+        Long userId = (Long) request.getAttribute("userId");
+        emotionService.concernPost(userId, id);
+        return Result.ok();
+    }
+
     @PostMapping("/checkin")
     public Result<Void> createCheckin(HttpServletRequest request, @RequestBody MoodCheckinDTO dto) {
         Long userId = (Long) request.getAttribute("userId");

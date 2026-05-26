@@ -67,6 +67,10 @@
           <el-icon><Reading /></el-icon>
           <span>文章管理</span>
         </el-menu-item>
+        <el-menu-item index="/counselor/assessments">
+          <el-icon><Document /></el-icon>
+          <span>测评数据</span>
+        </el-menu-item>
       </template>
     </el-menu>
 

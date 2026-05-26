@@ -53,7 +53,7 @@
       </div>
 
       <!-- Consultation Record -->
-      <div v-if="appointment.status === 'COMPLETED'" class="card-wrapper mb-16">
+      <div v-if="appointment.status === 'COMPLETED' || appointment.status === 'ARCHIVED'" class="card-wrapper mb-16">
         <h4>咨询记录</h4>
         <div v-if="appointment.contentSummary || appointment.diagnosis || appointment.suggestions" class="mt-16">
           <div v-if="appointment.contentSummary">

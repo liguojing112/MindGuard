@@ -5,7 +5,7 @@
       <div class="report-summary">
         <h3>{{ result.scaleName || '测评报告' }}</h3>
         <div class="result-level" :style="{ color: levelColor }">
-          {{ result.severityDescription || result.severityLevel || '正常' }}
+          {{ result.severityDescription || severityLabels[result.severityLevel] || result.severityLevel || '正常' }}
         </div>
         <div class="result-score">
           得分：<strong>{{ result.totalScore || result.score || 0 }}</strong>
@@ -27,7 +27,7 @@
       <h4>推荐阅读</h4>
       <div v-for="a in result.recommendedArticles" :key="a.id" class="rec-article">
         <span>{{ a.title }}</span>
-        <el-tag size="small" effect="plain">{{ a.severityLevel }}</el-tag>
+        <el-tag size="small" effect="plain">{{ severityLabels[a.severityLevel] || a.severityLevel }}</el-tag>
       </div>
     </div>
 
@@ -40,6 +40,7 @@
 <script setup>
 import { computed } from 'vue'
 import ScoreGauge from './ScoreGauge.vue'
+import { severityLabels } from '@/utils/constants'
 
 const props = defineProps({
   result: { type: Object, required: true }

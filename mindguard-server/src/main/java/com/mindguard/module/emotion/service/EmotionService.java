@@ -14,6 +14,7 @@ public interface EmotionService {
     PostVO getPostDetail(Long postId);
     PageResult<PostVO> getPublicPosts(Integer page, Integer size);
     void deletePost(Long userId, Long postId);
+    void concernPost(Long userId, Long postId);
     void createCheckin(Long userId, MoodCheckinDTO dto);
     List<MoodCheckin> getMyCheckins(Long userId);
     List<MoodCheckin> getCheckinCalendar(Long userId, String month);

@@ -60,6 +60,23 @@ const loadingCalendar = ref(false)
 const selectedMonth = ref(new Date().toISOString().slice(0, 7))
 const checkinData = ref([])
 
+const emojiMap = computed(() => {
+  const map = {}
+  moodEmojis.forEach(m => {
+    map[m.emoji] = m.emoji
+    map[m.value] = m.emoji
+    map[m.value.toUpperCase()] = m.emoji
+    map[m.value.toLowerCase()] = m.emoji
+  })
+  return map
+})
+
+function getDisplayEmoji(raw) {
+  if (!raw) return ''
+  const emoji = emojiMap.value[raw]
+  return emoji || raw
+}
+
 const monthDays = computed(() => {
   if (!checkinData.value.length) return []
   const [y, m] = selectedMonth.value.split('-').map(Number)
@@ -72,7 +89,7 @@ const monthDays = computed(() => {
       date: dateStr,
       dayNum: d,
       checked: !!found,
-      emoji: found?.moodEmoji || found?.emoji || ''
+      emoji: getDisplayEmoji(found?.moodEmoji || found?.emoji)
     })
   }
   return result

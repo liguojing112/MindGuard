@@ -44,6 +44,6 @@ deepseek:
 
 mindguard:
   upload:
-    path: ./uploads
+    path: ${UPLOAD_PATH:uploads}
   ai:
     crisis-threshold: 40

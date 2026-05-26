@@ -27,3 +27,11 @@ export function getResult(assessmentId) {
 export function getStats() {
   return request.get('/assessments/stats')
 }
+
+export function getAllAssessments(params) {
+  return request.get('/assessments/all', { params })
+}
+
+export function exportAssessments() {
+  return request.get('/assessments/export', { responseType: 'blob' })
+}

@@ -21,6 +21,7 @@ public class AssessmentResultVO {
     private String scaleName;
     private String scaleType;
     private String severityDescription;
+    private String studentName;
 
     private List<Article> recommendedArticles;
 }

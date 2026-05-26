@@ -71,6 +71,9 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional
     public void createArticle(Article article) {
+        if (article.getType() == null || article.getType().isEmpty()) {
+            article.setType("通用");
+        }
         article.setViewCount(0);
         article.setIsActive(1);
         articleMapper.insert(article);

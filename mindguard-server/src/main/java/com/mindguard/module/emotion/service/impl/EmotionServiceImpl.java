@@ -59,7 +59,7 @@ public class EmotionServiceImpl implements EmotionService {
         EmotionAnalysisResult analysis = new EmotionAnalysisResult();
         analysis.setPostId(post.getId());
         analysis.setEmotionScore(aiResult.getScore());
-        analysis.setEmotionLabel(aiResult.getLabel());
+        analysis.setEmotionLabel(mapToThreeStatus(aiResult.getLabel()));
         analysis.setKeywords(String.join(",", aiResult.getKeywords()));
         analysis.setAnalysisText(aiResult.getAnalysis());
         analysisResultMapper.insert(analysis);
@@ -81,6 +81,11 @@ public class EmotionServiceImpl implements EmotionService {
                         "学生" + userId + "发布了高危情绪内容，情感评分" + aiResult.getScore(),
                         alert.getId());
             }
+
+            notificationService.createNotification(userId, "APPOINTMENT_REMINDER",
+                    "心理咨询预约提醒",
+                    "您的情绪状态需要关注，建议尽快预约心理咨询师进行专业疏导。系统已为您优先安排预约通道。",
+                    alert.getId());
         }
 
         return buildPostVO(post, analysis, null);
@@ -145,6 +150,22 @@ public class EmotionServiceImpl implements EmotionService {
     }
 
     @Override
+    public void concernPost(Long userId, Long postId) {
+        EmotionPost post = postMapper.selectById(postId);
+        if (post == null) {
+            throw new BusinessException("帖子不存在");
+        }
+        List<User> counselors = userMapper.selectList(
+                new LambdaQueryWrapper<User>().eq(User::getRole, "COUNSELOR"));
+        for (User counselor : counselors) {
+            notificationService.createNotification(counselor.getId(), "CONCERN",
+                    "用户关注提醒",
+                    "有用户关注了帖子#" + postId + "，请关注该学生的情绪状态",
+                    postId);
+        }
+    }
+
+    @Override
     public void createCheckin(Long userId, MoodCheckinDTO dto) {
         MoodCheckin checkin = new MoodCheckin();
         checkin.setUserId(userId);
@@ -192,7 +213,7 @@ public class EmotionServiceImpl implements EmotionService {
 
         if (analysis != null) {
             vo.setScore(analysis.getEmotionScore());
-            vo.setLabel(analysis.getEmotionLabel());
+            vo.setLabel(mapToThreeStatus(analysis.getEmotionLabel()));
             if (analysis.getKeywords() != null && !analysis.getKeywords().isEmpty()) {
                 vo.setKeywords(List.of(analysis.getKeywords().split(",")));
             }
@@ -216,4 +237,14 @@ public class EmotionServiceImpl implements EmotionService {
     }
 
     private final MoodCheckinMapper moodCheckinMapper;
+
+    private String mapToThreeStatus(String label) {
+        if (label == null) return "正常情绪";
+        return switch (label) {
+            case "POSITIVE", "NEUTRAL" -> "正常情绪";
+            case "MILD_NEGATIVE" -> "一般负面";
+            case "SEVERE_NEGATIVE" -> "高危负面";
+            default -> "正常情绪";
+        };
+    }
 }

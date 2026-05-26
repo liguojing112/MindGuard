@@ -95,4 +95,15 @@ public class UserServiceImpl implements UserService {
         }
         userMapper.updateById(user);
     }
+
+    @Override
+    @Transactional
+    public void updateAvatar(Long userId, String avatarUrl) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        user.setAvatar(avatarUrl);
+        userMapper.updateById(user);
+    }
 }

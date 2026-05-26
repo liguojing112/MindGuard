@@ -47,7 +47,7 @@
             </el-table-column>
             <el-table-column label="程度" width="100">
               <template #default="{ row }">
-                <el-tag size="small" effect="plain">{{ row.severityLevel || row.level || row.severity || '正常' }}</el-tag>
+                <el-tag size="small" effect="plain">{{ severityLabels[row.severityLevel] || row.severityLevel }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="时间" width="160">
@@ -75,15 +75,26 @@
             <el-table-column label="状态" width="100">
               <template #default="{ row }"><StatusTag :status="row.status" size="small" /></template>
             </el-table-column>
-            <el-table-column label="评分" width="80">
+            <el-table-column label="评分" width="90">
               <template #default="{ row }">
                 <el-rate v-if="row.rating" :model-value="row.rating" disabled size="small" />
-                <span v-else>-</span>
+                <span v-else class="text-muted">未评价</span>
               </template>
             </el-table-column>
           </el-table>
         </div>
         <EmptyState v-else message="暂无预约记录" :image-size="60" />
+      </div>
+
+      <!-- Consultation Records -->
+      <div v-if="archive.consultationRecords?.length" class="card-wrapper">
+        <h4>咨询记录</h4>
+        <div v-for="record in archive.consultationRecords" :key="record.id" class="consult-record mt-16">
+          <div class="record-row"><strong>摘要：</strong>{{ record.contentSummary || '-' }}</div>
+          <div class="record-row"><strong>诊断：</strong>{{ record.diagnosis || '-' }}</div>
+          <div class="record-row"><strong>跟进建议：</strong>{{ record.suggestions || '-' }}</div>
+          <div class="record-time">{{ formatTime(record.createdAt) }}</div>
+        </div>
       </div>
     </template>
 
@@ -98,7 +109,7 @@ import { getStudentArchive } from '@/api/appointment'
 import StatusTag from '@/components/common/StatusTag.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { formatTime } from '@/utils/helpers'
-import { moodEmojis } from '@/utils/constants'
+import { moodEmojis, severityLabels } from '@/utils/constants'
 
 const emojiMap = Object.fromEntries(moodEmojis.map(m => [m.value, m.emoji]))
 
@@ -120,3 +131,14 @@ onMounted(async () => {
   finally { loading.value = false }
 })
 </script>
+
+<style lang="scss" scoped>
+.consult-record {
+  padding: 12px 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  .record-row { font-size: 14px; color: #303133; line-height: 1.8; }
+  .record-time { font-size: 12px; color: #909399; margin-top: 4px; }
+}
+</style>

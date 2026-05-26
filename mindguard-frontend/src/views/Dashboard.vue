@@ -5,7 +5,7 @@
     </div>
 
     <div class="stat-cards">
-      <StatCard icon="WarningFilled" color="#F56C6C" :value="overview.totalAlerts" label="总预警数" />
+      <StatCard icon="WarningFilled" color="#F56C6C" :value="overview.totalAlerts" label="总预警数" clickable @click="$router.push('/counselor/alerts')" />
       <StatCard icon="Warning" color="#E6A23C" :value="overview.pendingAlerts" label="待处理" clickable @click="$router.push('/counselor/alerts')" />
       <StatCard icon="Tickets" color="#67C23A" :value="overview.todayAppointments" label="本月预约" clickable @click="$router.push('/counselor/appointments')" />
       <StatCard icon="UserFilled" color="#409EFF" :value="overview.activeStudents" label="活跃学生" />

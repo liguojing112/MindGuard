@@ -25,7 +25,19 @@ public class Appointment {
     @TableField(exist = false)
     private String counselorName;
     @TableField(exist = false)
+    private String studentName;
+    @TableField(exist = false)
     private Integer rating;
+    @TableField(exist = false)
+    private Boolean evaluated;
+    @TableField(exist = false)
+    private String contentSummary;
+    @TableField(exist = false)
+    private String diagnosis;
+    @TableField(exist = false)
+    private String suggestions;
+    @TableField(exist = false)
+    private String comment;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
     @TableField(fill = FieldFill.UPDATE)

@@ -8,7 +8,9 @@
       <el-tab-pane label="待审核" name="PENDING" />
       <el-tab-pane label="已通过" name="APPROVED" />
       <el-tab-pane label="已拒绝" name="REJECTED" />
+      <el-tab-pane label="咨询中" name="IN_PROGRESS" />
       <el-tab-pane label="已完成" name="COMPLETED" />
+      <el-tab-pane label="已归档" name="ARCHIVED" />
       <el-tab-pane label="全部" name="" />
     </el-tabs>
 

@@ -30,6 +30,16 @@
           </div>
           <div v-if="apt.evaluated || apt.rating" class="apt-eval mt-8">
             <el-rate :model-value="apt.rating" disabled show-score text-color="#ff9900" />
+            <p v-if="apt.comment" class="eval-comment mt-4">{{ apt.comment }}</p>
+          </div>
+
+          <!-- Consultation record for completed -->
+          <div v-if="(apt.status === 'COMPLETED' || apt.status === 'ARCHIVED') && (apt.contentSummary || apt.diagnosis || apt.suggestions)" class="consult-record mt-12">
+            <el-divider />
+            <h5>咨询记录</h5>
+            <div v-if="apt.contentSummary" class="mt-4"><strong>内容摘要：</strong>{{ apt.contentSummary }}</div>
+            <div v-if="apt.diagnosis" class="mt-4"><strong>初步诊断：</strong>{{ apt.diagnosis }}</div>
+            <div v-if="apt.suggestions" class="mt-4"><strong>跟进建议：</strong>{{ apt.suggestions }}</div>
           </div>
         </div>
         <div class="pagination-wrap mt-16">
@@ -121,5 +131,8 @@ async function submitEvaluation() {
 .apt-type { font-size: 13px; color: #909399; }
 .apt-body { margin-top: 8px; font-size: 14px; color: #606266; }
 .apt-eval { padding-top: 8px; }
+.eval-comment { font-size: 13px; color: #606266; line-height: 1.5; }
+.consult-record { font-size: 14px; color: #303133; line-height: 1.8; }
+.consult-record h5 { font-size: 14px; color: #303133; margin-bottom: 4px; }
 .pagination-wrap { display: flex; justify-content: center; }
 </style>

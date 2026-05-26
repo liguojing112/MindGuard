@@ -4,8 +4,11 @@ import com.mindguard.common.PageResult;
 import com.mindguard.common.Result;
 import com.mindguard.module.appointment.dto.*;
 import com.mindguard.module.appointment.entity.Appointment;
+import com.mindguard.module.appointment.entity.Counselor;
+import com.mindguard.module.appointment.mapper.CounselorMapper;
 import com.mindguard.module.appointment.service.AppointmentService;
 import com.mindguard.module.appointment.service.CounselorService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +23,13 @@ public class AppointmentController {
 
     private final CounselorService counselorService;
     private final AppointmentService appointmentService;
+    private final CounselorMapper counselorMapper;
+
+    private Long getCounselorTableId(Long userId) {
+        Counselor counselor = counselorMapper.selectOne(
+                new LambdaQueryWrapper<Counselor>().eq(Counselor::getUserId, userId));
+        return counselor != null ? counselor.getId() : userId;
+    }
 
     @GetMapping("/appointments/counselors")
     public Result<List<CounselorVO>> listCounselors() {
@@ -56,7 +66,7 @@ public class AppointmentController {
                                                                      @RequestParam(required = false) String status,
                                                                      @RequestParam(defaultValue = "1") Integer page,
                                                                      @RequestParam(defaultValue = "10") Integer size) {
-        Long counselorId = (Long) request.getAttribute("userId");
+        Long counselorId = getCounselorTableId((Long) request.getAttribute("userId"));
         return Result.ok(appointmentService.getCounselorAppointments(counselorId, status, page, size));
     }
 
@@ -67,7 +77,7 @@ public class AppointmentController {
 
     @PutMapping("/appointments/{id}/approve")
     public Result<Void> approve(@PathVariable Long id, HttpServletRequest request) {
-        Long counselorId = (Long) request.getAttribute("userId");
+        Long counselorId = getCounselorTableId((Long) request.getAttribute("userId"));
         appointmentService.approve(id, counselorId);
         return Result.ok();
     }
@@ -75,7 +85,7 @@ public class AppointmentController {
     @PutMapping("/appointments/{id}/reject")
     public Result<Void> reject(@PathVariable Long id, @RequestBody Map<String, String> body,
                                 HttpServletRequest request) {
-        Long counselorId = (Long) request.getAttribute("userId");
+        Long counselorId = getCounselorTableId((Long) request.getAttribute("userId"));
         String reason = body.get("reason");
         appointmentService.reject(id, counselorId, reason);
         return Result.ok();
@@ -83,7 +93,7 @@ public class AppointmentController {
 
     @PutMapping("/appointments/{id}/start")
     public Result<Void> startConsultation(@PathVariable Long id, HttpServletRequest request) {
-        Long counselorId = (Long) request.getAttribute("userId");
+        Long counselorId = getCounselorTableId((Long) request.getAttribute("userId"));
         appointmentService.startConsultation(id, counselorId);
         return Result.ok();
     }
@@ -91,7 +101,7 @@ public class AppointmentController {
     @PostMapping("/appointments/{id}/complete")
     public Result<Void> completeConsultation(@PathVariable Long id, HttpServletRequest request,
                                               @RequestBody ConsultationRecordDTO dto) {
-        Long counselorId = (Long) request.getAttribute("userId");
+        Long counselorId = getCounselorTableId((Long) request.getAttribute("userId"));
         appointmentService.completeConsultation(id, counselorId, dto);
         return Result.ok();
     }

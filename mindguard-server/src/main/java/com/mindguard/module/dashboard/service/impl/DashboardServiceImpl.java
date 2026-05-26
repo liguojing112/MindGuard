@@ -43,16 +43,18 @@ public class DashboardServiceImpl implements DashboardService {
         overview.put("totalPosts", postMapper.selectCount(null));
         overview.put("totalAlerts", alertMapper.selectCount(null));
         overview.put("pendingAlerts", alertMapper.selectCount(
-                new LambdaQueryWrapper<Alert>().eq(Alert::getStatus, "PENDING")));
+                new LambdaQueryWrapper<Alert>().in(Alert::getStatus, "PENDING", "NOTICED")));
         overview.put("totalAppointments", appointmentMapper.selectCount(null));
-        overview.put("totalAssessments", userAssessmentMapper.selectCount(null));
+        overview.put("totalAssessments", assessmentResultMapper.selectCount(null));
 
-        // 本月预约数
+        // 本月预约数（按预约日期统计）
         LocalDate now = LocalDate.now();
-        LocalDateTime monthStart = now.withDayOfMonth(1).atStartOfDay();
+        LocalDate monthStart = now.withDayOfMonth(1);
+        LocalDate monthEnd = now.withDayOfMonth(now.lengthOfMonth());
         overview.put("todayAppointments", appointmentMapper.selectCount(
                 new LambdaQueryWrapper<Appointment>()
-                        .ge(Appointment::getCreatedAt, monthStart)));
+                        .ge(Appointment::getAppointmentDate, monthStart)
+                        .le(Appointment::getAppointmentDate, monthEnd)));
 
         // 活跃学生数（过去30天内有任何活动的学生）
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
@@ -65,6 +67,10 @@ public class DashboardServiceImpl implements DashboardService {
                 new LambdaQueryWrapper<Appointment>()
                         .ge(Appointment::getCreatedAt, thirtyDaysAgo));
         activeStudentIds.addAll(recentAppointments.stream().map(Appointment::getStudentId).collect(Collectors.toSet()));
+        List<com.mindguard.module.assessment.entity.UserAssessment> recentAssessments = userAssessmentMapper.selectList(
+                new LambdaQueryWrapper<com.mindguard.module.assessment.entity.UserAssessment>()
+                        .ge(com.mindguard.module.assessment.entity.UserAssessment::getStartedAt, thirtyDaysAgo));
+        activeStudentIds.addAll(recentAssessments.stream().map(com.mindguard.module.assessment.entity.UserAssessment::getUserId).collect(Collectors.toSet()));
         overview.put("activeStudents", activeStudentIds.size());
 
         return overview;
@@ -100,11 +106,11 @@ public class DashboardServiceImpl implements DashboardService {
         List<EmotionAnalysisResult> results = analysisResultMapper.selectList(null);
         Map<String, Long> distribution = results.stream()
                 .collect(Collectors.groupingBy(
-                        r -> r.getEmotionLabel() != null ? r.getEmotionLabel() : "NEUTRAL",
+                        r -> mapEmotionLabel(r.getEmotionLabel()),
                         Collectors.counting()));
 
-        String[] labels = {"POSITIVE", "NEUTRAL", "MILDLY_NEGATIVE", "SEVERELY_NEGATIVE"};
-        String[] names = {"积极", "中性", "一般负面", "高危负面"};
+        String[] labels = {"正常情绪", "一般负面", "高危负面"};
+        String[] names = {"正常情绪", "一般负面", "高危负面"};
         List<Map<String, Object>> result = new ArrayList<>();
         for (int i = 0; i < labels.length; i++) {
             Map<String, Object> item = new LinkedHashMap<>();
@@ -181,5 +187,15 @@ public class DashboardServiceImpl implements DashboardService {
             result.add(item);
         }
         return result;
+    }
+
+    private String mapEmotionLabel(String label) {
+        if (label == null) return "正常情绪";
+        return switch (label) {
+            case "POSITIVE", "NEUTRAL" -> "正常情绪";
+            case "MILD_NEGATIVE", "MILDLY_NEGATIVE" -> "一般负面";
+            case "SEVERE_NEGATIVE", "SEVERELY_NEGATIVE" -> "高危负面";
+            default -> label;
+        };
     }
 }

@@ -1,6 +1,7 @@
 package com.mindguard.module.appointment.dto;
 
 import com.mindguard.module.appointment.entity.Appointment;
+import com.mindguard.module.appointment.entity.ConsultationRecord;
 import com.mindguard.module.assessment.dto.AssessmentResultVO;
 import com.mindguard.module.emotion.entity.EmotionPost;
 import com.mindguard.module.emotion.entity.MoodCheckin;
@@ -16,4 +17,5 @@ public class StudentArchiveVO {
     private List<MoodCheckin> checkins;
     private List<AssessmentResultVO> assessments;
     private List<Appointment> appointments;
+    private List<ConsultationRecord> consultationRecords;
 }

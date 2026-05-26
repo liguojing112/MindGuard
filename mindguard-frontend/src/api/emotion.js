@@ -20,6 +20,10 @@ export function deletePost(id) {
   return request.delete(`/emotion/posts/${id}`)
 }
 
+export function concernPost(id) {
+  return request.post(`/emotion/posts/${id}/concern`)
+}
+
 export function createCheckin(data) {
   return request.post('/emotion/checkin', data)
 }

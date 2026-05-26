@@ -58,6 +58,9 @@
             <el-option v-for="(label, key) in severityLabels" :key="key" :label="label" :value="key" />
           </el-select>
         </el-form-item>
+        <el-form-item label="视频URL">
+          <el-input v-model="form.videoUrl" placeholder="可选，心理科普视频链接" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -90,7 +93,8 @@ const form = reactive({
   title: '',
   summary: '',
   content: '',
-  severityLevel: 'LOW'
+  severityLevel: 'LOW',
+  videoUrl: ''
 })
 
 onMounted(() => fetchArticles())
@@ -119,6 +123,7 @@ function openEdit(row) {
   form.summary = row.summary || ''
   form.content = row.content || ''
   form.severityLevel = row.severityLevel || 'LOW'
+  form.videoUrl = row.videoUrl || ''
   dialogVisible.value = true
 }
 
@@ -127,6 +132,7 @@ function resetForm() {
   form.summary = ''
   form.content = ''
   form.severityLevel = 'LOW'
+  form.videoUrl = ''
 }
 
 async function handleSave() {

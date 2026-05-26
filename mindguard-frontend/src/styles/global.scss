@@ -1,0 +1,132 @@
+@use './variables.scss' as *;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  color: $text-color;
+  background-color: $bg-color;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: $primary-color;
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #909399;
+}
+
+// Element Plus overrides - green primary
+:root {
+  --el-color-primary: #67C23A;
+  --el-color-primary-light-3: #95D475;
+  --el-color-primary-light-5: #B3E19D;
+  --el-color-primary-light-7: #D2EDC4;
+  --el-color-primary-light-8: #E1F3D8;
+  --el-color-primary-light-9: #F0F9EB;
+  --el-color-primary-dark-2: #529B2E;
+  --el-menu-bg-color: #FFFFFF;
+  --el-menu-text-color: #303133;
+  --el-menu-active-color: #67C23A;
+  --el-menu-hover-bg-color: #F0F9EB;
+  --el-fill-color-blank: #FFFFFF;
+}
+
+.el-button--primary {
+  --el-button-bg-color: #67C23A;
+  --el-button-border-color: #67C23A;
+  --el-button-hover-bg-color: #95D475;
+  --el-button-hover-border-color: #95D475;
+  --el-button-active-bg-color: #529B2E;
+  --el-button-active-border-color: #529B2E;
+}
+
+// Utility classes
+.page-container {
+  padding: 20px;
+  min-height: calc(100vh - 60px);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: $text-color;
+  }
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.ml-8 { margin-left: 8px; }
+.mr-8 { margin-right: 8px; }
+.p-16 { padding: 16px; }
+.p-24 { padding: 24px; }
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// Card styles
+.card-wrapper {
+  background: $bg-white;
+  border-radius: $border-radius;
+  padding: 20px;
+  box-shadow: $shadow-light;
+}
+
+// Login/Register page gradient background
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0f9eb 0%, #ede9fe 50%, #f0f9eb 100%);
+  padding: 20px;
+}

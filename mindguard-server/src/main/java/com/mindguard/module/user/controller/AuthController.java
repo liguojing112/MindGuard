@@ -41,6 +41,11 @@ public class AuthController {
         return Result.ok();
     }
 
+    @GetMapping("/users")
+    public Result<java.util.List<UserVO>> listLoginUsers() {
+        return Result.ok(userService.listLoginUsers());
+    }
+
     @GetMapping("/info")
     public Result<UserVO> getInfo(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");

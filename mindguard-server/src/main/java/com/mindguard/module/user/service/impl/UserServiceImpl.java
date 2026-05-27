@@ -106,4 +106,17 @@ public class UserServiceImpl implements UserService {
         user.setAvatar(avatarUrl);
         userMapper.updateById(user);
     }
+
+    @Override
+    public java.util.List<UserVO> listLoginUsers() {
+        java.util.List<User> users = userMapper.selectList(
+                new LambdaQueryWrapper<User>().eq(User::getStatus, 1));
+        return users.stream().map(u -> {
+            UserVO vo = new UserVO();
+            vo.setUsername(u.getUsername());
+            vo.setRealName(u.getRealName());
+            vo.setRole(u.getRole());
+            return vo;
+        }).toList();
+    }
 }

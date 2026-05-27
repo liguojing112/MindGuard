@@ -12,6 +12,10 @@ export function getInfo() {
   return request.get('/auth/info')
 }
 
+export function getLoginUsers() {
+  return request.get('/auth/users')
+}
+
 export function updateProfile(data) {
   return request.put('/auth/profile', data)
 }

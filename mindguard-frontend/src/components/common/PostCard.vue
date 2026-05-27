@@ -13,6 +13,20 @@
       </div>
     </div>
     <div class="post-content">{{ post.content }}</div>
+    <div v-if="(post.score || post.analysis)" class="analysis-feedback mt-12">
+      <el-divider />
+      <div class="feedback-header">
+        <span class="feedback-title">AI 情绪分析</span>
+        <el-tag v-if="post.score" size="small" :type="post.score < 40 ? 'danger' : post.score < 70 ? 'warning' : 'success'">
+          分数：{{ post.score }}
+        </el-tag>
+      </div>
+      <div v-if="post.keywords && post.keywords.length" class="mt-4">
+        <span class="feedback-label">关键词：</span>
+        <el-tag v-for="kw in post.keywords" :key="kw" size="small" effect="plain" class="mr-4">{{ kw }}</el-tag>
+      </div>
+      <div v-if="post.analysis" class="mt-4 feedback-text">{{ post.analysis }}</div>
+    </div>
     <div v-if="showActions && !hideActions" class="post-actions">
       <slot name="actions" />
     </div>
@@ -87,6 +101,12 @@ function formatTime(t) {
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
+}
+.analysis-feedback {
+  .feedback-header { display: flex; align-items: center; gap: 8px; }
+  .feedback-title { font-size: 14px; font-weight: 600; color: #303133; }
+  .feedback-label { font-size: 13px; color: #909399; }
+  .feedback-text { font-size: 13px; color: #606266; line-height: 1.7; background: #fafafa; padding: 10px 12px; border-radius: 6px; }
 }
 .post-actions {
   margin-top: 12px;

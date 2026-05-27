@@ -1,6 +1,24 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/utils/auth'
 
+const counselorChildren = [
+  { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/Dashboard.vue') },
+  { path: 'alerts', name: 'AlertManagement', component: () => import('@/views/AlertManagement.vue') },
+  { path: 'alerts/:id', name: 'AlertDetail', component: () => import('@/views/AlertDetail.vue') },
+  { path: 'appointments', name: 'AppointmentReview', component: () => import('@/views/AppointmentReview.vue') },
+  { path: 'appointments/:id', name: 'AppointmentDetail', component: () => import('@/views/AppointmentDetail.vue') },
+  { path: 'students/:id', name: 'StudentArchive', component: () => import('@/views/StudentArchive.vue') },
+  { path: 'articles', name: 'ArticleManagement', component: () => import('@/views/ArticleManagement.vue') },
+  { path: 'assessments', name: 'AssessmentData', component: () => import('@/views/AssessmentData.vue') },
+  { path: 'profile', name: 'CounselorProfile', component: () => import('@/views/PersonalCenter.vue') },
+  { path: 'notifications', name: 'CounselorNotifications', component: () => import('@/views/NotificationList.vue') }
+]
+
+const adminChildren = [
+  ...counselorChildren.map(c => ({ path: c.path, component: c.component })),
+  { path: 'settings', name: 'AISettings', component: () => import('@/views/AISettings.vue') }
+]
+
 const routes = [
   {
     path: '/',
@@ -45,18 +63,14 @@ const routes = [
     component: () => import('@/views/Layout.vue'),
     meta: { role: 'COUNSELOR' },
     redirect: '/counselor/dashboard',
-    children: [
-      { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/Dashboard.vue') },
-      { path: 'alerts', name: 'AlertManagement', component: () => import('@/views/AlertManagement.vue') },
-      { path: 'alerts/:id', name: 'AlertDetail', component: () => import('@/views/AlertDetail.vue') },
-      { path: 'appointments', name: 'AppointmentReview', component: () => import('@/views/AppointmentReview.vue') },
-      { path: 'appointments/:id', name: 'AppointmentDetail', component: () => import('@/views/AppointmentDetail.vue') },
-      { path: 'students/:id', name: 'StudentArchive', component: () => import('@/views/StudentArchive.vue') },
-      { path: 'articles', name: 'ArticleManagement', component: () => import('@/views/ArticleManagement.vue') },
-      { path: 'assessments', name: 'AssessmentData', component: () => import('@/views/AssessmentData.vue') },
-      { path: 'profile', name: 'CounselorProfile', component: () => import('@/views/PersonalCenter.vue') },
-      { path: 'notifications', name: 'CounselorNotifications', component: () => import('@/views/NotificationList.vue') }
-    ]
+    children: counselorChildren
+  },
+  {
+    path: '/admin',
+    component: () => import('@/views/Layout.vue'),
+    meta: { role: 'ADMIN' },
+    redirect: '/admin/dashboard',
+    children: adminChildren
   }
 ]
 
@@ -73,7 +87,8 @@ router.beforeEach((to, from, next) => {
     if (token && (to.path === '/login' || to.path === '/register')) {
       const role = localStorage.getItem('userRole')
       if (role === 'STUDENT') return next('/student/home')
-      if (adminRoles.includes(role)) return next('/counselor/dashboard')
+      if (role === 'COUNSELOR') return next('/counselor/dashboard')
+      if (role === 'ADMIN') return next('/admin/dashboard')
       return next('/login')
     }
     return next()
@@ -83,7 +98,7 @@ router.beforeEach((to, from, next) => {
   }
   const role = localStorage.getItem('userRole')
   if (to.meta.role && to.meta.role !== role) {
-    if (to.meta.role === 'COUNSELOR' && adminRoles.includes(role)) return next()
+    if (role === 'ADMIN') return next()
     if (role === 'STUDENT') return next('/student/home')
     if (adminRoles.includes(role)) return next('/counselor/dashboard')
     return next('/login')

@@ -32,9 +32,12 @@ service.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
+      const isLoginPage = window.location.pathname === '/login' || window.location.pathname === '/register'
       removeToken()
       localStorage.removeItem('userRole')
-      window.location.href = '/login'
+      if (!isLoginPage) {
+        window.location.href = '/login'
+      }
       return Promise.reject(error)
     }
     ElMessage.error(error.message || '网络错误')

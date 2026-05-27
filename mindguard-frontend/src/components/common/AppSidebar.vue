@@ -49,27 +49,31 @@
         </el-menu-item>
       </template>
 
-      <!-- Counselor menus -->
+      <!-- Counselor / Admin menus -->
       <template v-if="role === 'COUNSELOR' || role === 'ADMIN'">
-        <el-menu-item index="/counselor/dashboard">
+        <el-menu-item :index="basePath + '/dashboard'">
           <el-icon><Odometer /></el-icon>
           <span>数据大屏</span>
         </el-menu-item>
-        <el-menu-item index="/counselor/alerts">
+        <el-menu-item :index="basePath + '/alerts'">
           <el-icon><Warning /></el-icon>
           <span>预警管理</span>
         </el-menu-item>
-        <el-menu-item index="/counselor/appointments">
+        <el-menu-item :index="basePath + '/appointments'">
           <el-icon><Tickets /></el-icon>
           <span>预约管理</span>
         </el-menu-item>
-        <el-menu-item index="/counselor/articles">
+        <el-menu-item :index="basePath + '/articles'">
           <el-icon><Reading /></el-icon>
           <span>文章管理</span>
         </el-menu-item>
-        <el-menu-item index="/counselor/assessments">
+        <el-menu-item :index="basePath + '/assessments'">
           <el-icon><Document /></el-icon>
           <span>测评数据</span>
+        </el-menu-item>
+        <el-menu-item v-if="role === 'ADMIN'" :index="basePath + '/settings'">
+          <el-icon><Setting /></el-icon>
+          <span>系统设置</span>
         </el-menu-item>
       </template>
     </el-menu>
@@ -90,11 +94,13 @@ const router = useRouter()
 const userStore = useUserStore()
 const isCollapse = ref(false)
 const role = computed(() => userStore.role)
+const basePath = computed(() => role.value === 'ADMIN' ? '/admin' : '/counselor')
 
 const activeMenu = computed(() => route.path)
 
 function goHome() {
   if (role.value === 'STUDENT') router.push('/student/home')
+  else if (role.value === 'ADMIN') router.push('/admin/dashboard')
   else router.push('/counselor/dashboard')
 }
 </script>

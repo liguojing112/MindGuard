@@ -1,0 +1,5 @@
+{
+  "apiKey" : "",
+  "apiUrl" : "https://api.deepseek.com/v1/chat/completions",
+  "mock" : true
+}

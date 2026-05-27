@@ -10,4 +10,5 @@ public interface UserService {
     UserVO getInfo(Long userId);
     void updateProfile(Long userId, UserVO vo);
     void updateAvatar(Long userId, String avatarUrl);
+    java.util.List<UserVO> listLoginUsers();
 }

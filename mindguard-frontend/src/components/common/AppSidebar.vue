@@ -27,6 +27,10 @@
           <el-icon><Edit /></el-icon>
           <span>我的倾诉</span>
         </el-menu-item>
+        <el-menu-item index="/student/ai-chat">
+          <el-icon><ChatLineSquare /></el-icon>
+          <span>AI聊一聊</span>
+        </el-menu-item>
         <el-menu-item index="/student/checkin">
           <el-icon><Calendar /></el-icon>
           <span>心情打卡</span>

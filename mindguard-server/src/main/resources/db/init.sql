@@ -111,7 +111,7 @@ CREATE TABLE mood_checkin (
 -- ============================================
 CREATE TABLE alert (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    post_id BIGINT NOT NULL COMMENT '关联倾诉贴ID',
+    post_id BIGINT DEFAULT NULL COMMENT '关联倾诉贴ID(可空:AI聊一聊预警不关联帖子)',
     user_id BIGINT NOT NULL COMMENT '学生用户ID',
     alert_level VARCHAR(20) NOT NULL COMMENT '预警级别',
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '状态: PENDING/NOTICED/COMMUNICATED/RESOLVED',
@@ -217,10 +217,12 @@ CREATE TABLE article (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(200) NOT NULL COMMENT '文章标题',
     content TEXT COMMENT '文章内容',
-    type VARCHAR(30) NOT NULL COMMENT '类型: 焦虑/抑郁/通用',
+    summary VARCHAR(500) COMMENT '文章摘要',
+    type VARCHAR(30) NOT NULL COMMENT '类型: 焦虑/抑郁/通用/VIDEO',
     tags VARCHAR(200) COMMENT '标签',
     severity_level VARCHAR(20) COMMENT '适用程度: NORMAL/MILD/MODERATE/SEVERE',
     source_url VARCHAR(500) COMMENT '来源链接',
+    video_url VARCHAR(500) COMMENT '视频链接',
     view_count INT DEFAULT 0 COMMENT '浏览次数',
     is_active TINYINT DEFAULT 1 COMMENT '是否发布',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -410,6 +412,72 @@ INSERT INTO scale_option (question_id, option_text, score_value, sort_order) VAL
 (38, '没有或很少时间', 4, 1), (38, '小部分时间', 3, 2), (38, '相当多时间', 2, 3), (38, '绝大部分或全部时间', 1, 4),
 (39, '没有或很少时间', 1, 1), (39, '小部分时间', 2, 2), (39, '相当多时间', 3, 3), (39, '绝大部分或全部时间', 4, 4),
 (40, '没有或很少时间', 4, 1), (40, '小部分时间', 3, 2), (40, '相当多时间', 2, 3), (40, '绝大部分或全部时间', 1, 4);
+
+-- ============================================
+-- 17. AI聊天消息表
+-- ============================================
+CREATE TABLE IF NOT EXISTS ai_chat_message (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    role VARCHAR(20) NOT NULL COMMENT 'user/assistant',
+    content TEXT NOT NULL COMMENT '消息内容',
+    emotion_score INT COMMENT 'AI分析情绪分数',
+    emotion_label VARCHAR(30) COMMENT 'AI分析情绪标签',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_chat_user (user_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI聊天消息';
+
+-- ============================================
+-- 倾诉贴种子数据（学生4=王同学, 5=陈同学, 6=刘同学）
+-- ============================================
+INSERT INTO emotion_post (user_id, content, is_anonymous, mood_emoji, status) VALUES
+(4, '今天参加了社团活动，认识了新朋友，感觉特别开心！大学生活越来越充实了，对未来充满期待。', 0, 'HAPPY', 1),
+(4, '最近期末考试快到了，感觉压力好大，晚上总是失眠，白天又疲惫不堪，真的很焦虑，不知道能不能考好。', 0, 'ANXIOUS', 1),
+(5, '刚刚完成了小组项目展示，大家都夸我做得好，特别有成就感！感恩有这样的团队伙伴，一起努力的感觉真好。', 0, 'PROUD', 1),
+(5, '最近心情特别低落，感觉特别崩溃，做什么都提不起劲，觉得一切都没有意义，活着好累……不知道该怎么办。', 0, 'sad', 1),
+(6, '今天天气真好，在操场上跑了几圈，吹着风感觉很放松很舒服。生活就是这样，简单的小事也能让人快乐。', 0, 'HAPPY', 1),
+(6, '和室友闹了点矛盾，心情有点郁闷。我知道都是小事，但就是不知道该怎么开口沟通，人际关系真的好难。', 0, 'sad', 1);
+
+-- 对应的AI分析结果（与MockAIService规则一致）
+INSERT INTO emotion_analysis_result (post_id, emotion_score, emotion_label, keywords, analysis_text) VALUES
+(1, 82, 'POSITIVE', '开心,充实,期待', '检测到积极情绪词汇，整体情绪状态良好。用户表现出较高的生活满意度和社交主动性，是心理健康的积极信号。'),
+(2, 48, 'MILD_NEGATIVE', '压力,失眠,疲惫,焦虑', '检测到学业压力和睡眠问题相关的负面词汇，情绪分数偏低。建议合理安排复习计划，尝试放松训练改善睡眠，如有持续困扰可预约心理咨询。'),
+(3, 85, 'POSITIVE', '成就感,感恩,努力', '检测到成就感、感恩等积极词汇，情绪状态非常健康。良好的团队合作体验对心理健康有积极促进作用。'),
+(4, 22, 'SEVERE_NEGATIVE', '崩溃,无意义,绝望', '【高危预警】检测到严重负面情绪表达，包含无价值感和绝望倾向。分数极低（22分），建议立即进行危机干预，安排专业心理咨询师跟进。'),
+(5, 78, 'POSITIVE', '放松,快乐,简单', '检测到放松、快乐等积极词汇，情绪状态良好。适当的体育锻炼是维持心理健康的有效方式。'),
+(6, 52, 'MILD_NEGATIVE', '郁闷,矛盾,沟通', '检测到人际关系困扰相关的负面词汇，情绪分数略偏低。建议尝试非暴力沟通技巧，必要时可向辅导员寻求帮助。');
+
+-- 高危预警（post_id=4 陈同学的帖子触发）
+INSERT INTO alert (post_id, user_id, alert_level, status, assigned_counselor_id, remarks, emotion_score) VALUES
+(4, 5, 'SEVERE', 'PENDING', 1, '系统自动检测到高危负面情绪，建议立即关注', 22);
+
+-- ============================================
+-- 心情打卡种子数据
+-- ============================================
+INSERT INTO mood_checkin (user_id, mood_emoji, note, checkin_date) VALUES
+(4, 'OPTIMISTIC', '今天天气好，心情也不错~', CURDATE()),
+(5, 'sad', '有点低落，但还在努力', CURDATE()),
+(6, 'HAPPY', '和好朋友一起吃了好吃的！', CURDATE());
+
+-- ============================================
+-- 预约种子数据（咨询师1=张老师, 咨询师2=李老师）
+-- ============================================
+INSERT INTO appointment (student_id, counselor_id, appointment_date, time_slot, issue_type, is_anonymous, status, room_number) VALUES
+(4, 1, CURDATE() + INTERVAL 1 DAY, '09:00-10:00', '学业压力', 0, 'APPROVED', CONCAT('ROOM-', DATE_FORMAT(CURDATE(), '%Y%m%d'), '-A1K')),
+(5, 1, CURDATE() - INTERVAL 2 DAY, '14:00-15:00', '情绪困扰', 0, 'COMPLETED', CONCAT('ROOM-', DATE_FORMAT(CURDATE(), '%Y%m%d'), '-B2M'));
+
+-- 已完成预约的咨询记录
+INSERT INTO consultation_record (appointment_id, counselor_id, content_summary, diagnosis, suggestions) VALUES
+(2, 1, '陈同学近期情绪低落，自述对学业和生活失去兴趣，持续时间约两周。交流中情绪逐渐稳定，表达了一些内心的困惑和压力来源。整体表现出一定的求助意愿。', '初步评估为轻度抑郁倾向，需持续关注。无自伤风险，暂不建议药物干预。', '1. 每周进行一次心理咨询，连续4周\n2. 建议每天进行30分钟有氧运动\n3. 尝试正念呼吸练习，早晚各5分钟\n4. 如有情绪急剧恶化，随时联系咨询师');
+
+-- 学生对已完成咨询的评价
+INSERT INTO evaluation (appointment_id, student_id, rating, comment) VALUES
+(2, 5, 5, '张老师非常专业和耐心，交流后感觉心里轻松了很多。谢谢老师的建议，我会努力调整的。');
+
+-- 系统通知种子数据
+INSERT INTO notification (user_id, type, title, content, is_read, related_id) VALUES
+(4, 'APPOINTMENT_APPROVED', '预约审核通过', '您预约的心理咨询已审核通过，请按时参加。咨询房间号已生成。', 0, 1),
+(5, 'ALERT', '危机预警提醒', '系统检测到您的情绪状态需要关注，建议预约心理咨询。辅导员已收到通知，将有专人跟进。', 0, 4);
 
 -- ============================================
 -- 科普文章初始数据

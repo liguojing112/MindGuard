@@ -88,15 +88,50 @@ public class MockAIService implements AIService {
     }
 
     @Override
-    public String generateSuggestion(String studentProfile) {
-        return "【个性化咨询建议】（Mock生成）\n\n"
-                + "基于学生情绪数据和测评记录的综合分析：\n\n"
-                + "1. 建立信任关系：初次咨询时注重营造安全、非评判的环境，让学生感到被理解和接纳。\n"
-                + "2. 探索核心问题：通过开放式提问，引导学生表达当前最困扰的问题。\n"
-                + "3. 评估风险因素：关注学生是否有自伤、自杀等风险行为，必要时启动危机干预流程。\n"
-                + "4. 制定辅导计划：根据评估结果，与学生共同制定可行的短期和长期辅导目标。\n"
-                + "5. 定期跟进：安排后续咨询，监测学生情绪变化和应对策略的有效性。\n\n"
-                + "学生概况：" + studentProfile;
+    public Map<String, String> generateSuggestion(String studentProfile) {
+        return Map.of(
+            "contentSummary", "学生主动前来咨询，主诉学业压力和情绪困扰。咨询过程中学生表达了近期面临的多重压力，包括课程负担、人际关系及未来规划等方面的焦虑。通过倾听和共情，初步建立了信任关系，学生能够较为开放地表达内心感受。",
+            "diagnosis", "根据学生自述和情绪表现，初步评估为一般心理困扰，主要表现为学业压力引发的焦虑情绪和轻度睡眠问题。未发现自伤或自杀风险。建议进一步通过标准化量表评估焦虑和抑郁程度。",
+            "suggestions", "1. 建议每周一次定期咨询，持续4-6周\n2. 教授基础放松训练和正念呼吸技巧\n3. 协助制定合理的学习计划和时间管理策略\n4. 鼓励参加校园社交活动，拓展支持网络\n5. 两周后使用SAS/SDS量表复测，评估干预效果"
+        );
+    }
+
+    @Override
+    public ChatResult chat(String userMessage) {
+        int severeCount = countMatches(userMessage, SEVERE_NEGATIVE_WORDS);
+        int mildCount = countMatches(userMessage, MILD_NEGATIVE_WORDS);
+        int posCount = countMatches(userMessage, POSITIVE_WORDS);
+
+        ChatResult result = new ChatResult();
+        if (severeCount > 0) {
+            int score = 15 + random.nextInt(25);
+            result.setEmotionScore(score);
+            result.setEmotionLabel("高危负面");
+            result.setReply("我听到了你的声音，能感受到你现在的痛苦。请记住，你并不孤单，有很多人愿意帮助你。"
+                    + "我强烈建议你立即联系学校心理咨询中心，或者拨打心理援助热线400-161-9995。"
+                    + "你愿意和我聊聊具体发生了什么吗？我会一直在这里陪着你。");
+        } else if (mildCount > posCount) {
+            int score = 40 + random.nextInt(30);
+            result.setEmotionScore(score);
+            result.setEmotionLabel("一般负面");
+            String[] replies = {
+                "我理解你现在的感受，这种情绪是很正常的。能具体说说是什么事情让你有这样的感觉吗？也许我们可以一起想想应对的方法。",
+                "谢谢你愿意和我分享这些。每个人都会有情绪低落的时候，这并不代表你不够坚强。你平时有没有一些能让自己放松的小习惯呢？",
+                "听起来你最近压力确实不小。记住，适当表达情绪本身就是一种释放。如果你觉得需要，我可以帮你联系学校的心理辅导员聊一聊。"
+            };
+            result.setReply(replies[random.nextInt(replies.length)]);
+        } else {
+            int score = 70 + random.nextInt(26);
+            result.setEmotionScore(score);
+            result.setEmotionLabel("正常情绪");
+            String[] replies = {
+                "很高兴听到你分享这些！保持这样积极的心态真的很棒。有什么特别开心的事情想和我分享吗？",
+                "你的状态听起来不错！积极的情绪是最好的免疫力。继续保持，也记得多关心身边的朋友哦。",
+                "感谢你的信任和分享。生活中的小确幸总是值得珍惜的，希望你能一直保持这样阳光的心态！"
+            };
+            result.setReply(replies[random.nextInt(replies.length)]);
+        }
+        return result;
     }
 
     private int countMatches(String content, List<String> words) {

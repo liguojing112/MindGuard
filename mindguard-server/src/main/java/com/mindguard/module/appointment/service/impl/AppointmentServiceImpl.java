@@ -21,6 +21,7 @@ import com.mindguard.module.emotion.entity.MoodCheckin;
 import com.mindguard.module.emotion.mapper.AlertMapper;
 import com.mindguard.module.emotion.mapper.EmotionPostMapper;
 import com.mindguard.module.emotion.mapper.MoodCheckinMapper;
+import com.mindguard.ai.AIService;
 import com.mindguard.module.user.dto.UserVO;
 import com.mindguard.module.user.entity.User;
 import com.mindguard.module.user.mapper.UserMapper;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,6 +49,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final MoodCheckinMapper moodCheckinMapper;
     private final ScaleMapper scaleMapper;
     private final UserAssessmentMapper userAssessmentMapper;
+    private final AIService aiService;
 
     @Override
     @Transactional
@@ -352,5 +355,51 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new BusinessException("无权操作非本人的预约");
         }
         return appointment;
+    }
+
+    @Override
+    public Map<String, String> generateAISuggestion(Long appointmentId) {
+        Appointment appointment = appointmentMapper.selectById(appointmentId);
+        if (appointment == null) {
+            throw new BusinessException("预约不存在");
+        }
+
+        User student = userMapper.selectById(appointment.getStudentId());
+        StringBuilder profile = new StringBuilder();
+        profile.append("学生：").append(student.getRealName() != null ? student.getRealName() : student.getUsername()).append("\n");
+
+        // 情绪倾诉记录
+        List<EmotionPost> posts = emotionPostMapper.selectList(
+                new LambdaQueryWrapper<EmotionPost>().eq(EmotionPost::getUserId, student.getId())
+                        .orderByDesc(EmotionPost::getCreatedAt).last("LIMIT 5"));
+        if (!posts.isEmpty()) {
+            profile.append("\n近期倾诉内容：\n");
+            for (EmotionPost p : posts) {
+                profile.append("- ").append(p.getContent().length() > 100
+                        ? p.getContent().substring(0, 100) + "..." : p.getContent()).append("\n");
+            }
+        }
+
+        // 测评记录
+        List<UserAssessment> assessments = userAssessmentMapper.selectList(
+                new LambdaQueryWrapper<UserAssessment>().eq(UserAssessment::getUserId, student.getId())
+                        .eq(UserAssessment::getStatus, "COMPLETED")
+                        .orderByDesc(UserAssessment::getCompletedAt).last("LIMIT 3"));
+        for (UserAssessment ua : assessments) {
+            AssessmentResult result = assessmentResultMapper.selectOne(
+                    new LambdaQueryWrapper<AssessmentResult>().eq(AssessmentResult::getAssessmentId, ua.getId()));
+            if (result != null) {
+                Scale scale = scaleMapper.selectById(ua.getScaleId());
+                profile.append("\n测评：").append(scale != null ? scale.getName() : "未知量表")
+                        .append(" | 分数：").append(result.getTotalScore())
+                        .append(" | 程度：").append(result.getSeverityLevel()).append("\n");
+            }
+        }
+
+        // 预约记录
+        profile.append("\n本次咨询问题：").append(appointment.getIssueType() != null ? appointment.getIssueType() : "未指定");
+
+        Map<String, String> suggestion = aiService.generateSuggestion(profile.toString());
+        return suggestion;
     }
 }

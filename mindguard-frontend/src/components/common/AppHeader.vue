@@ -34,6 +34,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { useNotificationStore } from '@/store/notification'
 import { computed, onMounted } from 'vue'
+import { Bell } from '@element-plus/icons-vue'
 import SurnameAvatar from '@/components/common/SurnameAvatar.vue'
 
 const router = useRouter()

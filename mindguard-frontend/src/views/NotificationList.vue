@@ -36,14 +36,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getNotifications, markAsRead } from '@/api/notification'
 import { useNotificationStore } from '@/store/notification'
+import { useUserStore } from '@/store/user'
 import EmptyState from '@/components/common/EmptyState.vue'
 
 const router = useRouter()
 const store = useNotificationStore()
+const userStore = useUserStore()
+const isStudent = computed(() => userStore.role === 'STUDENT')
 
 const loading = ref(false)
 const list = ref([])
@@ -79,9 +82,17 @@ async function handleRead(item) {
   }
   if (item.relatedId) {
     if (item.type === 'ALERT' || item.type === 'CONCERN') {
-      router.push(`/counselor/alerts/${item.relatedId}`)
+      if (isStudent.value) {
+        router.push(`/student/posts`)
+      } else {
+        router.push(`/counselor/alerts/${item.relatedId}`)
+      }
     } else if (item.type === 'APPOINTMENT' || item.type === 'APPOINTMENT_REMINDER') {
-      router.push(`/counselor/appointments/${item.relatedId}`)
+      if (isStudent.value) {
+        router.push(`/student/appointments`)
+      } else {
+        router.push(`/counselor/appointments/${item.relatedId}`)
+      }
     }
   }
 }

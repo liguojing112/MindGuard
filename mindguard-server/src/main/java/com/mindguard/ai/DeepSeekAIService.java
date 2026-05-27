@@ -10,8 +10,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class DeepSeekAIService implements AIService {
@@ -81,15 +81,62 @@ public class DeepSeekAIService implements AIService {
     }
 
     @Override
-    public String generateSuggestion(String studentProfile) {
+    public Map<String, String> generateSuggestion(String studentProfile) {
         try {
-            String prompt = "作为专业心理咨询督导，请根据以下学生概况，生成个性化的咨询建议（300字以内）：\n" + studentProfile;
+            String prompt = "作为专业心理咨询督导，请根据以下学生概况，生成个性化咨询建议。"
+                    + "必须返回严格JSON格式，不要包含markdown代码块标记："
+                    + "{\"contentSummary\": \"本次咨询内容摘要(100-200字)\", "
+                    + "\"diagnosis\": \"初步诊断结论(100-200字)\", "
+                    + "\"suggestions\": \"跟进建议(100-200字)\"}\n\n"
+                    + "学生概况：\n" + studentProfile;
 
             String requestBody = String.format(
                     "{\"model\":\"deepseek-chat\",\"messages\":["
                             + "{\"role\":\"user\",\"content\":\"%s\"}"
                             + "],\"temperature\":0.5}",
                     escapeJson(prompt));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .timeout(Duration.ofSeconds(60))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                JSONObject respJson = JSON.parseObject(response.body());
+                JSONArray choices = respJson.getJSONArray("choices");
+                String replyText = choices.getJSONObject(0).getJSONObject("message").getString("content");
+                replyText = replyText.replaceAll("```json|```", "").trim();
+                JSONObject result = JSON.parseObject(replyText);
+                return Map.of(
+                    "contentSummary", result.getString("contentSummary"),
+                    "diagnosis", result.getString("diagnosis"),
+                    "suggestions", result.getString("suggestions")
+                );
+            }
+        } catch (Exception e) {
+            log.warn("DeepSeek生成建议失败: {}, 降级为Mock", e.getMessage());
+        }
+        return fallback.generateSuggestion(studentProfile);
+    }
+
+    @Override
+    public ChatResult chat(String userMessage) {
+        try {
+            String systemPrompt = "你是一个温暖的校园心理陪伴助手。请用亲切、共情的语气回复学生，"
+                    + "同时评估其情绪状态。返回严格JSON："
+                    + "{\"reply\": \"你的回复(200字内)\", \"score\": 0-100的整数, \"label\": \"POSITIVE/NEUTRAL/MILD_NEGATIVE/SEVERE_NEGATIVE\"}";
+
+            String requestBody = String.format(
+                    "{\"model\":\"deepseek-chat\",\"messages\":["
+                            + "{\"role\":\"system\",\"content\":\"%s\"},"
+                            + "{\"role\":\"user\",\"content\":\"%s\"}"
+                            + "],\"temperature\":0.7}",
+                    escapeJson(systemPrompt), escapeJson(userMessage));
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(apiUrl))
@@ -104,12 +151,33 @@ public class DeepSeekAIService implements AIService {
             if (response.statusCode() == 200) {
                 JSONObject respJson = JSON.parseObject(response.body());
                 JSONArray choices = respJson.getJSONArray("choices");
-                return choices.getJSONObject(0).getJSONObject("message").getString("content");
+                String replyText = choices.getJSONObject(0).getJSONObject("message").getString("content");
+                replyText = replyText.replaceAll("```json|```", "").trim();
+                JSONObject result = JSON.parseObject(replyText);
+
+                ChatResult chatResult = new ChatResult();
+                chatResult.setReply(result.getString("reply"));
+                chatResult.setEmotionScore(result.getInteger("score"));
+                chatResult.setEmotionLabel(mapLabel(result.getString("label")));
+                return chatResult;
             }
         } catch (Exception e) {
-            log.warn("DeepSeek生成建议失败: {}, 降级为Mock", e.getMessage());
+            log.warn("DeepSeek聊天失败: {}, 降级为Mock", e.getMessage());
         }
-        return fallback.generateSuggestion(studentProfile);
+        return fallback.chat(userMessage);
+    }
+
+    private String mapLabel(String label) {
+        log.info("mapLabel 输入: {}", label);
+        if (label == null) return "正常情绪";
+        String mapped = switch (label.toUpperCase()) {
+            case "POSITIVE", "NEUTRAL" -> "正常情绪";
+            case "MILD_NEGATIVE" -> "一般负面";
+            case "SEVERE_NEGATIVE" -> "高危负面";
+            default -> label;
+        };
+        log.info("mapLabel 输出: {}", mapped);
+        return mapped;
     }
 
     private String escapeJson(String s) {

@@ -1,6 +1,9 @@
 package com.mindguard.ai;
 
+import java.util.Map;
+
 public interface AIService {
     EmotionResult analyzeEmotion(String content);
-    String generateSuggestion(String studentProfile);
+    Map<String, String> generateSuggestion(String studentProfile);
+    ChatResult chat(String userMessage);
 }

@@ -7,6 +7,8 @@ import com.mindguard.module.appointment.dto.EvaluationDTO;
 import com.mindguard.module.appointment.dto.StudentArchiveVO;
 import com.mindguard.module.appointment.entity.Appointment;
 
+import java.util.Map;
+
 public interface AppointmentService {
     void createAppointment(Long studentId, AppointmentDTO dto);
     PageResult<Appointment> getMyAppointments(Long studentId, Integer page, Integer size);
@@ -20,4 +22,5 @@ public interface AppointmentService {
     StudentArchiveVO getStudentArchive(Long studentId);
     boolean hasActiveAlerts(Long studentId);
     boolean hasSevereAssessment(Long studentId);
+    Map<String, String> generateAISuggestion(Long appointmentId);
 }

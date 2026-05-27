@@ -46,11 +46,17 @@ function getData() {
   return { ...form }
 }
 
+function setAISuggestion(data) {
+  if (data.contentSummary) form.contentSummary = data.contentSummary
+  if (data.diagnosis) form.diagnosis = data.diagnosis
+  if (data.suggestions) form.suggestions = data.suggestions
+}
+
 function reset() {
   form.contentSummary = ''
   form.diagnosis = ''
   form.suggestions = ''
 }
 
-defineExpose({ getData, reset })
+defineExpose({ getData, setAISuggestion, reset })
 </script>

@@ -48,6 +48,10 @@ export function evaluateAppointment(id, data) {
   return request.post(`/appointments/${id}/evaluate`, data)
 }
 
+export function getAISuggestion(id) {
+  return request.get(`/appointments/${id}/ai-suggestion`)
+}
+
 export function getStudentArchive(studentId) {
   return request.get(`/students/${studentId}/archive`)
 }

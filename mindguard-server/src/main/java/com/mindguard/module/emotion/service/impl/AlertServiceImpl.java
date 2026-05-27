@@ -8,9 +8,11 @@ import com.mindguard.module.emotion.dto.AlertVO;
 import com.mindguard.module.emotion.entity.Alert;
 import com.mindguard.module.emotion.entity.EmotionPost;
 import com.mindguard.module.emotion.entity.EmotionAnalysisResult;
+import com.mindguard.module.emotion.entity.AiChatMessage;
 import com.mindguard.module.emotion.mapper.AlertMapper;
 import com.mindguard.module.emotion.mapper.EmotionAnalysisResultMapper;
 import com.mindguard.module.emotion.mapper.EmotionPostMapper;
+import com.mindguard.module.emotion.mapper.AiChatMessageMapper;
 import com.mindguard.module.emotion.service.AlertService;
 import com.mindguard.module.appointment.entity.Counselor;
 import com.mindguard.module.appointment.mapper.CounselorMapper;
@@ -31,6 +33,7 @@ public class AlertServiceImpl implements AlertService {
     private final AlertMapper alertMapper;
     private final EmotionPostMapper postMapper;
     private final EmotionAnalysisResultMapper analysisResultMapper;
+    private final AiChatMessageMapper chatMessageMapper;
     private final UserMapper userMapper;
     private final CounselorMapper counselorMapper;
 
@@ -128,17 +131,36 @@ public class AlertServiceImpl implements AlertService {
         vo.setCreatedAt(alert.getCreatedAt());
         vo.setUpdatedAt(alert.getUpdatedAt());
 
-        EmotionPost post = postMapper.selectById(alert.getPostId());
-        if (post != null) {
-            vo.setPostContent(post.getContent());
-            vo.setPostCreatedAt(post.getCreatedAt() != null ? post.getCreatedAt() : post.getUpdatedAt());
-        }
+        if (alert.getPostId() != null) {
+            // 传统倾诉贴预警
+            EmotionPost post = postMapper.selectById(alert.getPostId());
+            if (post != null) {
+                vo.setPostContent(post.getContent());
+                vo.setPostCreatedAt(post.getCreatedAt() != null ? post.getCreatedAt() : post.getUpdatedAt());
+            }
+            EmotionAnalysisResult analysisResult = analysisResultMapper.selectOne(
+                    new LambdaQueryWrapper<EmotionAnalysisResult>().eq(EmotionAnalysisResult::getPostId, alert.getPostId()));
+            if (analysisResult != null) {
+                vo.setAnalysisLabel(mapToThreeStatus(analysisResult.getEmotionLabel()));
+                vo.setAnalysisReport(analysisResult.getAnalysisText());
+            }
+        } else {
+            // AI聊一聊预警：从聊天记录获取内容
+            vo.setPostContent("【AI聊一聊】" + alert.getRemarks());
+            vo.setAnalysisLabel(mapScoreToLabel(alert.getEmotionScore()));
+            vo.setAnalysisReport("AI聊一聊自动检测，情绪分数: " + alert.getEmotionScore() + "分");
 
-        EmotionAnalysisResult analysisResult = analysisResultMapper.selectOne(
-                new LambdaQueryWrapper<EmotionAnalysisResult>().eq(EmotionAnalysisResult::getPostId, alert.getPostId()));
-        if (analysisResult != null) {
-            vo.setAnalysisLabel(mapToThreeStatus(analysisResult.getEmotionLabel()));
-            vo.setAnalysisReport(analysisResult.getAnalysisText());
+            // 获取触发预警的聊天消息
+            List<AiChatMessage> recentMsgs = chatMessageMapper.selectList(
+                    new LambdaQueryWrapper<AiChatMessage>()
+                            .eq(AiChatMessage::getUserId, alert.getUserId())
+                            .eq(AiChatMessage::getRole, "user")
+                            .le(AiChatMessage::getCreatedAt, alert.getCreatedAt())
+                            .orderByDesc(AiChatMessage::getCreatedAt)
+                            .last("LIMIT 1"));
+            if (!recentMsgs.isEmpty() && recentMsgs.get(0).getContent() != null) {
+                vo.setPostContent(recentMsgs.get(0).getContent());
+            }
         }
 
         User student = userMapper.selectById(alert.getUserId());
@@ -154,6 +176,13 @@ public class AlertServiceImpl implements AlertService {
         }
 
         return vo;
+    }
+
+    private String mapScoreToLabel(Integer score) {
+        if (score == null) return "正常情绪";
+        if (score < 40) return "高危负面";
+        if (score < 70) return "一般负面";
+        return "正常情绪";
     }
 
     private String mapToThreeStatus(String label) {

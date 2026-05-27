@@ -10,11 +10,17 @@
     <div v-loading="loading">
       <template v-if="alerts.length">
         <el-table :data="alerts" stripe @row-click="goDetail" style="cursor:pointer">
-          <el-table-column label="学生" width="120">
+          <el-table-column label="来源" width="90">
+            <template #default="{ row }">
+              <el-tag v-if="!row.postId" type="info" size="small">AI聊一聊</el-tag>
+              <el-tag v-else type="" size="small">倾诉贴</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="学生" width="100">
             <template #default="{ row }">{{ row.studentName || row.realName || '匿名' }}</template>
           </el-table-column>
-          <el-table-column prop="postContent" label="倾诉内容" min-width="200" show-overflow-tooltip />
-          <el-table-column label="分析结果" width="140">
+          <el-table-column prop="postContent" label="内容" min-width="180" show-overflow-tooltip />
+          <el-table-column label="分析结果" width="120">
             <template #default="{ row }">
               <AnalysisBadge :label="row.analysisLabel || row.analysisResult" />
             </template>

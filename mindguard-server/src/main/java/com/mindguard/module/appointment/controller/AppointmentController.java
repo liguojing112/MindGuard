@@ -114,6 +114,11 @@ public class AppointmentController {
         return Result.ok();
     }
 
+    @GetMapping("/appointments/{id}/ai-suggestion")
+    public Result<Map<String, String>> getAISuggestion(@PathVariable Long id) {
+        return Result.ok(appointmentService.generateAISuggestion(id));
+    }
+
     @GetMapping("/students/{id}/archive")
     public Result<StudentArchiveVO> getStudentArchive(@PathVariable Long id) {
         return Result.ok(appointmentService.getStudentArchive(id));

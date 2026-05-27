@@ -39,7 +39,12 @@
       <div v-if="appointment.status === 'IN_PROGRESS'" class="card-wrapper mb-16">
         <h4>完成咨询记录</h4>
         <ConsultationForm ref="consultFormRef" class="mt-16" />
-        <el-button type="success" class="mt-16" :loading="completing" @click="handleComplete">提交咨询记录</el-button>
+        <div class="mt-16">
+          <el-button type="warning" :loading="aiLoading" @click="handleAISuggest">
+            <el-icon><MagicStick /></el-icon> AI 生成咨询建议
+          </el-button>
+          <el-button type="success" :loading="completing" @click="handleComplete">提交咨询记录</el-button>
+        </div>
       </div>
 
       <!-- Evaluation -->
@@ -88,7 +93,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getAppointmentDetail, approveAppointment, rejectAppointment, startAppointment, completeAppointment } from '@/api/appointment'
+import { getAppointmentDetail, approveAppointment, rejectAppointment, startAppointment, completeAppointment, getAISuggestion } from '@/api/appointment'
 import StatusTag from '@/components/common/StatusTag.vue'
 import ConsultationForm from '@/components/common/ConsultationForm.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -98,6 +103,7 @@ const loading = ref(false)
 const appointment = ref(null)
 const actionLoading = ref(false)
 const completing = ref(false)
+const aiLoading = ref(false)
 
 const rejectVisible = ref(false)
 const rejectReason = ref('')
@@ -149,6 +155,18 @@ async function handleStart() {
     await refresh()
   } catch { /* */ }
   finally { actionLoading.value = false }
+}
+
+async function handleAISuggest() {
+  aiLoading.value = true
+  try {
+    const res = await getAISuggestion(route.params.id)
+    if (res.data) {
+      consultFormRef.value?.setAISuggestion(res.data)
+      ElMessage.success('AI 建议已生成，可修改后提交')
+    }
+  } catch { /* */ }
+  finally { aiLoading.value = false }
 }
 
 async function handleComplete() {

@@ -45,6 +45,7 @@ const routes = [
       { path: 'home', name: 'StudentHome', component: () => import('@/views/Home.vue') },
       { path: 'emotion-square', name: 'EmotionSquare', component: () => import('@/views/EmotionSquare.vue') },
       { path: 'posts', name: 'MyPosts', component: () => import('@/views/MyPosts.vue') },
+      { path: 'ai-chat', name: 'AIChat', component: () => import('@/views/AIChat.vue') },
       { path: 'checkin', name: 'MoodCheckin', component: () => import('@/views/MoodCheckin.vue') },
       { path: 'assessments', name: 'AssessmentList', component: () => import('@/views/AssessmentList.vue') },
       { path: 'assessments/:id', name: 'TakeAssessment', component: () => import('@/views/TakeAssessment.vue') },
